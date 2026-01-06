@@ -6,15 +6,14 @@
     <title>添加陪玩信息 | 简洁列表版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- 自定义Tailwind配置 -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#4F46E5', // 主色调（蓝紫）
-                        secondary: '#F3F4F6', // 背景浅灰
-                        neutral: '#6B7280', // 文本浅灰
+                        primary: '#4F46E5',
+                        secondary: '#F3F4F6',
+                        neutral: '#6B7280',
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -62,7 +61,6 @@
                 <!-- 基本信息 -->
                 <div class="space-y-4">
                     <h3 class="text-lg font-semibold border-b pb-2">基本信息</h3>
-                    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="nickname" class="form-label">昵称/类型 <span class="text-red-500">*</span></label>
@@ -80,17 +78,14 @@
                 <!-- 接单信息 -->
                 <div class="space-y-4">
                     <h3 class="text-lg font-semibold border-b pb-2">接单信息</h3>
-                    
                     <div>
                         <label class="form-label">接单类型（可多选，最多10个） <span class="text-red-500">*</span></label>
-                        <!-- 自定义添加标签的输入框 -->
                         <div class="flex items-center mt-2 mb-2">
                             <input type="text" id="newServiceTag" class="form-input mr-2 w-auto flex-1" placeholder="输入自定义接单类型">
                             <button type="button" id="addServiceTagBtn" class="px-3 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-sm">
                                 <i class="fa fa-plus mr-1"></i>添加
                             </button>
                         </div>
-                        <!-- 标签展示区域 -->
                         <div class="flex flex-wrap mt-2" id="serviceTags">
                             <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="语聊">
                                 语聊 <i class="fa fa-times tag-delete"></i>
@@ -116,17 +111,14 @@
                             <input type="hidden" id="services" name="services" required>
                         </div>
                     </div>
-                    
                     <div>
                         <label class="form-label">擅长游戏（可多选，最多10个） <span class="text-red-500">*</span></label>
-                        <!-- 自定义添加标签的输入框 -->
                         <div class="flex items-center mt-2 mb-2">
                             <input type="text" id="newGameTag" class="form-input mr-2 w-auto flex-1" placeholder="输入自定义游戏名称">
                             <button type="button" id="addGameTagBtn" class="px-3 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-sm">
                                 <i class="fa fa-plus mr-1"></i>添加
                             </button>
                         </div>
-                        <!-- 标签展示区域 -->
                         <div class="flex flex-wrap mt-2" id="gameTags">
                             <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="王者">
                                 王者 <i class="fa fa-times tag-delete"></i>
@@ -146,7 +138,6 @@
                             <input type="hidden" id="games" name="games" required>
                         </div>
                     </div>
-                    
                     <div>
                         <label for="availableTime" class="form-label">接单时间 <span class="text-red-500">*</span></label>
                         <input type="text" id="availableTime" name="availableTime" required
@@ -157,13 +148,11 @@
                 <!-- 媒体信息（非必填） -->
                 <div class="space-y-4">
                     <h3 class="text-lg font-semibold border-b pb-2">媒体信息（选填）</h3>
-                    
                     <div>
                         <label for="videoUrl" class="form-label">试音视频URL</label>
                         <input type="url" id="videoUrl" name="videoUrl"
                             class="form-input" placeholder="https://example.com/video.mp4">
                     </div>
-                    
                     <div>
                         <label for="homepageUrl" class="form-label">主页链接</label>
                         <input type="url" id="homepageUrl" name="homepageUrl"
@@ -185,6 +174,7 @@
             </form>
         </div>
     </main>
+
     <!-- 页面底部 -->
     <footer class="bg-white mt-12 py-6 border-t border-gray-200">
         <div class="container mx-auto px-4 text-center text-sm text-neutral">
@@ -192,16 +182,13 @@
         </div>
     </footer>
 
-
-
     <script>
         const addPwForm = document.getElementById('addPwForm');
-        const MAX_TAGS = 10; // 最大标签数量限制
-
+        const MAX_TAGS = 10;
         const mm1 = 'ghp';
         const mm2 = '_qhEnzfDPTs1I6C90X';
         const mm3 = 'l9m8eF4GD3Jxz4S0QAp'
-        // GitHub 配置项
+        // GitHub 配置（替换成你的新Token）
         const GITHUB_CONFIG = {
             owner: 'coopclub',
             repo: 'coopclub.github.io', 
@@ -209,6 +196,22 @@
             token: mm1 + mm2 + mm3
         };
 
+        // 修复核心：重构Base64解码逻辑，完全容错
+        function safeBase64Decode(base64Str) {
+            try {
+                // 步骤1：补全Base64缺失的等号（确保长度是4的倍数）
+                const padded = base64Str.padEnd(base64Str.length + (4 - base64Str.length % 4) % 4, '=');
+                // 步骤2：替换非法字符（部分场景会出现-/_代替+/)
+                const normalized = padded.replace(/-/g, '+').replace(/_/g, '/');
+                // 步骤3：安全解码
+                return decodeURIComponent(escape(atob(normalized)));
+            } catch (e) {
+                console.warn('Base64解码失败，返回空字符串：', e);
+                return '';
+            }
+        }
+
+        // 获取GitHub数据（完全容错）
         async function getPwDataFromGitHub() {
             try {
                 const response = await fetch(
@@ -221,38 +224,55 @@
                     }
                 );
 
+                // 场景1：文件不存在（404），返回空数组和空SHA
                 if (response.status === 404) {
+                    console.log('data.json不存在，将创建新文件');
                     return { data: [], sha: '' };
                 }
 
+                // 场景2：请求失败（非200/404）
+                if (!response.ok) {
+                    throw new Error(`请求失败：${response.status} ${response.statusText}`);
+                }
+
                 const result = await response.json();
-                // 解码Base64
-                const content = decodeURIComponent(escape(atob(result.content)));
+                
+                // 场景3：文件存在，安全解码内容
+                const content = safeBase64Decode(result.content || '');
+                
+                // 场景4：解析JSON，容错
+                let pwData = [];
+                try {
+                    pwData = content ? JSON.parse(content) : [];
+                } catch (parseError) {
+                    console.warn('JSON解析失败，使用空数组：', parseError);
+                    pwData = [];
+                }
+
                 return {
-                    data: JSON.parse(content || '[]'),
-                    sha: result.sha
+                    data: Array.isArray(pwData) ? pwData : [], // 确保是数组
+                    sha: result.sha || ''
                 };
             } catch (error) {
                 console.error('获取GitHub数据失败：', error);
-                alert('获取数据失败，请检查网络或GitHub配置');
+                alert('获取数据失败：' + error.message);
                 throw error;
             }
         }
 
-        // 2. 保存数据到GitHub
+        // 保存数据到GitHub
         async function savePwDataToGitHub(newData) {
             try {
-                // 1. 获取现有数据和文件SHA
                 const { data: pwList, sha } = await getPwDataFromGitHub();
                 
-                // 2. 生成符合格式的ID
+                // 生成ID
                 const maxIdNum = pwList.reduce((max, item) => {
-                    const num = parseInt(item.id.replace('video', '')) || 0;
+                    const num = parseInt(item.id?.replace('video', '')) || 0;
                     return num > max ? num : max;
-                }, 4); // 初始值为4，匹配示例中的video4、video5
+                }, 4);
                 const newId = `video${maxIdNum + 1}`;
-                
-                // 3. 组装严格匹配目标格式
+
+                // 组装数据
                 const formattedData = {
                     id: newId,
                     nickname: newData.nickname,
@@ -263,13 +283,11 @@
                     videoUrl: newData.videoUrl || '', 
                     homepageUrl: newData.homepageUrl || '' 
                 };
-                
-                // 4. 追加新数据到列表
+
                 pwList.push(formattedData);
-                // 格式化JSON
                 const newContent = JSON.stringify(pwList, null, 2);
-                
-                // 5. 调用GitHub API更新文件
+
+                // 提交到GitHub
                 const response = await fetch(
                     `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
                     {
@@ -281,7 +299,7 @@
                         },
                         body: JSON.stringify({
                             message: `Add new pw info: ${formattedData.nickname} (${formattedData.id})`,
-                            content: btoa(unescape(encodeURIComponent(newContent))), // 编码为Base64
+                            content: btoa(unescape(encodeURIComponent(newContent))),
                             sha: sha 
                         })
                     }
@@ -289,7 +307,7 @@
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(`GitHub API 错误：${error.message}`);
+                    throw new Error(`GitHub API 错误：${error.message}（状态码：${response.status}）`);
                 }
 
                 return newId;
@@ -300,7 +318,7 @@
             }
         }
 
-        // 3. 工具函数
+        // 工具函数（不变）
         function resetTagSelection() {
             const serviceTags = document.querySelectorAll('#serviceTags .tag-item');
             serviceTags.forEach(tag => {
@@ -401,14 +419,13 @@
             });
         }
 
-        // 4. 表单提交
+        // 表单提交
         addPwForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // 收集表单数据
             const formData = {
                 nickname: document.getElementById('nickname').value.trim(),
-                age: document.getElementById('age').value.trim(), // 保持字符串类型
+                age: document.getElementById('age').value.trim(),
                 services: document.getElementById('services').value.split(',').filter(Boolean),
                 games: document.getElementById('games').value.split(',').filter(Boolean),
                 availableTime: document.getElementById('availableTime').value.trim(),
@@ -416,7 +433,7 @@
                 homepageUrl: document.getElementById('homepageUrl').value.trim()
             };
 
-            // 验证必填项
+            // 验证
             if (!formData.nickname) {
                 alert('请输入昵称/类型！');
                 return;
@@ -438,22 +455,20 @@
                 return;
             }
 
-            // 提交到GitHub
             try {
                 await savePwDataToGitHub(formData);
                 alert('陪玩信息添加成功！即将返回列表页');
-                window.location.href = 'pw.html'; // 跳转到列表页
+                window.location.href = 'pw.html';
             } catch (error) {
                 console.error('提交失败：', error);
                 alert('添加失败，请检查GitHub配置或重试！');
             }
         });
 
-        // 5. 初始化逻辑
+        // 初始化
         setupTagSelection('serviceTags');
         setupTagSelection('gameTags');
 
-        // 绑定添加标签按钮事件
         document.getElementById('addServiceTagBtn').addEventListener('click', () => {
             addCustomTag('newServiceTag', 'serviceTags');
         });
@@ -461,7 +476,6 @@
             addCustomTag('newGameTag', 'gameTags');
         });
         
-        // 回车添加标签
         document.getElementById('newServiceTag').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') addCustomTag('newServiceTag', 'serviceTags');
         });
@@ -469,12 +483,10 @@
             if (e.key === 'Enter') addCustomTag('newGameTag', 'gameTags');
         });
 
-        // 表单重置
         addPwForm.addEventListener('reset', function() {
             setTimeout(resetTagSelection, 0);
         });
 
-        // 页面加载初始化
         document.addEventListener('DOMContentLoaded', resetTagSelection);
     </script>
 </body>
