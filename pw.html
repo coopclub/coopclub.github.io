@@ -158,10 +158,10 @@
                 // document.body.innerHTML = '<h1 class="text-center text-red-500 mt-10">禁止调试！</h1>';
                 return '';
             };
-            console.log('%c', devtools); // 触发检测
+            // console.log('%c', devtools); // 触发检测
         }
         // 定时检测
-        setInterval(detectDevTools, 1000);
+        setInterval(detectDevTools, 10000);
 
         // ========== 原有功能代码（保持不变） ==========
         const onlineCountElement = document.getElementById('onlineCount');
@@ -424,4 +424,5 @@
     </script>
 </body>
 </html>
+
 
