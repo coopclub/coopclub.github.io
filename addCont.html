@@ -192,8 +192,6 @@
         </div>
     </footer>
 
-
-
     <script>
         const addPwForm = document.getElementById('addPwForm');
         const MAX_TAGS = 10; // 最大标签数量限制
@@ -219,15 +217,35 @@
                 );
 
                 if (response.status === 404) {
+                    console.log('data.json文件不存在，将创建新文件');
                     return { data: [], sha: '' };
                 }
 
                 const result = await response.json();
-                // 解码Base64
-                const content = decodeURIComponent(escape(atob(result.content)));
+                
+                // 修复：健壮的Base64解码逻辑，增加容错
+                let content = '';
+                try {
+                    // 先解码Base64，再处理URI编码
+                    content = decodeURIComponent(escape(atob(result.content)));
+                } catch (decodeError) {
+                    console.error('Base64解码失败，尝试降级处理：', decodeError);
+                    // 降级：直接使用原内容，或重置为空JSON数组
+                    content = result.content || '[]';
+                }
+
+                // 修复：JSON解析容错
+                let pwData = [];
+                try {
+                    pwData = JSON.parse(content || '[]');
+                } catch (parseError) {
+                    console.error('JSON解析失败，使用空数组：', parseError);
+                    pwData = [];
+                }
+
                 return {
-                    data: JSON.parse(content || '[]'),
-                    sha: result.sha
+                    data: pwData,
+                    sha: result.sha || ''
                 };
             } catch (error) {
                 console.error('获取GitHub数据失败：', error);
@@ -236,7 +254,7 @@
             }
         }
 
-        // 2. 保存数据到GitHub
+        // 保存数据到GitHub
         async function savePwDataToGitHub(newData) {
             try {
                 // 1. 获取现有数据和文件SHA
@@ -263,7 +281,7 @@
                 
                 // 4. 追加新数据到列表
                 pwList.push(formattedData);
-                // 格式化JSON
+                // 格式化JSON（确保缩进，避免解析错误）
                 const newContent = JSON.stringify(pwList, null, 2);
                 
                 // 5. 调用GitHub API更新文件
@@ -286,7 +304,7 @@
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(`GitHub API 错误：${error.message}`);
+                    throw new Error(`GitHub API 错误：${error.message}（状态码：${response.status}）`);
                 }
 
                 return newId;
@@ -297,7 +315,7 @@
             }
         }
 
-        // 3. 工具函数
+        // 工具函数
         function resetTagSelection() {
             const serviceTags = document.querySelectorAll('#serviceTags .tag-item');
             serviceTags.forEach(tag => {
@@ -398,7 +416,7 @@
             });
         }
 
-        // 4. 表单提交
+        // 表单提交
         addPwForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -446,7 +464,7 @@
             }
         });
 
-        // 5. 初始化逻辑
+        // 初始化逻辑
         setupTagSelection('serviceTags');
         setupTagSelection('gameTags');
 
