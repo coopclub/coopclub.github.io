@@ -46,6 +46,19 @@
                 @apply py-12 text-center text-neutral;
             }
         }
+        /* 新增：粘性底部核心样式 */
+        html, body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1; /* 让main占满剩余空间，把footer推到底部 */
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
@@ -112,8 +125,8 @@
         </div>
     </main>
 
-    <!-- 页面底部 -->
-    <footer class="bg-white mt-12 py-6 border-t border-gray-200">
+    <!-- 页面底部（固定在最底部） -->
+    <footer class="bg-white mt-0 py-6 border-t border-gray-200">
         <div class="container mx-auto px-4 text-center text-sm text-neutral">
             <p>© 2026 笼club 陪玩信息展示平台 | 简洁列表版</p>
         </div>
@@ -424,5 +437,3 @@
     </script>
 </body>
 </html>
-
-
