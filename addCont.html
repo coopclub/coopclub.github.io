@@ -188,150 +188,59 @@
         const mm1 = 'ghp';
         const mm2 = '_qhEnzfDPTs1I6C90X';
         const mm3 = 'l9m8eF4GD3Jxz4S0QAp'
-        // GitHub 配置
+        // 配置：替换为你的 GitHub 信息
         const GITHUB_CONFIG = {
             owner: 'coopclub',
-            repo: 'coopclub.github.io', 
-            path: 'data.json', 
+            repo: 'coopclub.github.io',
+            issueNumber: 1, // 新建一个 Issue，把编号填这里
             token: mm1 + mm2 + mm3
         };
 
-        // 调试日志函数
-        function logDebug(msg, data = null) {
-            console.log(`[${new Date().toLocaleTimeString()}] ${msg}`, data || '');
-        }
-
-        // 【彻底修复】Base64解码函数（完全容错，即使无效也返回空数组）
-        function safeBase64Decode(base64Str) {
+        // 工具函数：获取所有陪玩数据（从 Issue 评论中读取）
+        async function getPwData() {
             try {
-                // 1. 过滤所有非Base64字符
-                const validChars = base64Str.replace(/[^A-Za-z0-9+/=]/g, '');
-                // 2. 补全长度
-                const padded = validChars.padEnd(validChars.length + (4 - validChars.length % 4) % 4, '=');
-                // 3. 解码
-                return decodeURIComponent(escape(atob(padded)));
-            } catch (e) {
-                logDebug('Base64解码失败，返回空字符串', e.message);
-                return ''; // 解码失败时返回空，避免中断流程
-            }
-        }
-
-        // 获取GitHub数据（完全容错）
-        async function getPwDataFromGitHub() {
-            try {
-                logDebug('尝试读取GitHub数据');
-                const response = await fetch(
-                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?t=${Date.now()}`,
+                const res = await fetch(
+                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues/${GITHUB_CONFIG.issueNumber}/comments`,
                     {
                         headers: {
                             'Authorization': `token ${GITHUB_CONFIG.token}`,
-                            'Accept': 'application/vnd.github.v3+json',
-                            'Cache-Control': 'no-cache'
+                            'Accept': 'application/vnd.github.v3+json'
                         }
                     }
                 );
-
-                if (response.status === 404) {
-                    logDebug('data.json不存在，返回空数组');
-                    return { data: [], sha: '' };
-                }
-
-                if (!response.ok) {
-                    throw new Error(`请求失败：${response.status}`);
-                }
-
-                const result = await response.json();
-                logDebug('读取到GitHub原始数据', { sha: result.sha });
-
-                // 【关键】无论解码是否失败，都返回空数组（避免中断）
-                const content = safeBase64Decode(result.content || '');
-                let pwData = [];
-                try {
-                    pwData = content ? JSON.parse(content) : [];
-                } catch (e) {
-                    logDebug('JSON解析失败，返回空数组', e.message);
-                    pwData = [];
-                }
-
-                // 确保是数组
-                return {
-                    data: Array.isArray(pwData) ? pwData : [],
-                    sha: result.sha || ''
-                };
-            } catch (error) {
-                logDebug('读取GitHub数据失败', error.message);
-                // 读取失败时强制返回空数组，确保流程能继续
-                return { data: [], sha: '' };
+                const comments = await res.json();
+                // 每个评论存一条数据
+                return comments.map(comment => JSON.parse(comment.body));
+            } catch (e) {
+                console.error('获取数据失败', e);
+                return [];
             }
         }
 
-        // 保存数据到GitHub
-        async function savePwDataToGitHub(newData) {
+        // 工具函数：保存新数据（作为 Issue 评论提交）
+        async function savePwData(newData) {
             try {
-                // 1. 读取旧数据（即使失败也返回空数组）
-                const { data: oldPwList, sha } = await getPwDataFromGitHub();
-                logDebug('当前旧数据长度', oldPwList.length);
-                
-                // 2. 生成新ID
-                const maxId = oldPwList.reduce((max, item) => {
-                    const idNum = parseInt(item.id?.replace('video', '')) || 0;
-                    return Math.max(max, idNum);
-                }, 4);
-                const newId = `video${maxId + 1}`;
-
-                // 3. 组装新数据
-                const formattedData = {
-                    id: newId,
-                    nickname: newData.nickname,
-                    age: newData.age,
-                    services: newData.services,
-                    games: newData.games,
-                    availableTime: newData.availableTime,
-                    videoUrl: newData.videoUrl || '',
-                    homepageUrl: newData.homepageUrl || ''
-                };
-
-                // 4. 追加新数据
-                const newPwList = [...oldPwList, formattedData];
-                const newContent = JSON.stringify(newPwList, null, 2);
-                logDebug('追加后数据长度', newPwList.length);
-
-                // 5. 提交到GitHub
-                const requestBody = {
-                    message: `Add pw: ${formattedData.nickname}`,
-                    content: btoa(unescape(encodeURIComponent(newContent))),
-                    branch: 'main',
-                    sha: sha // 有SHA则传，无则不传
-                };
-
-                const response = await fetch(
-                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+                const res = await fetch(
+                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues/${GITHUB_CONFIG.issueNumber}/comments`,
                     {
-                        method: 'PUT',
+                        method: 'POST',
                         headers: {
                             'Authorization': `token ${GITHUB_CONFIG.token}`,
+                            'Accept': 'application/vnd.github.v3+json',
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(requestBody)
+                        body: JSON.stringify({ body: JSON.stringify(newData) })
                     }
                 );
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    logDebug('GitHub提交错误', error);
-                    throw new Error(error.message || `提交失败：${response.status}`);
-                }
-
-                logDebug('数据提交成功');
-                return newId;
-            } catch (error) {
-                logDebug('保存数据失败', error.message);
-                alert('保存失败：' + error.message);
-                throw error;
+                if (!res.ok) throw new Error('提交失败');
+                return true;
+            } catch (e) {
+                console.error('保存数据失败', e);
+                return false;
             }
         }
 
-        // 工具函数（不变）
+        // 标签相关工具函数（不变）
         function resetTagSelection() {
             const serviceTags = document.querySelectorAll('#serviceTags .tag-item');
             serviceTags.forEach(tag => {
@@ -437,6 +346,7 @@
             e.preventDefault();
             
             const formData = {
+                id: `video${Date.now()}`, // 用时间戳做唯一ID
                 nickname: document.getElementById('nickname').value.trim(),
                 age: document.getElementById('age').value.trim(),
                 services: document.getElementById('services').value.split(',').filter(Boolean),
@@ -468,12 +378,12 @@
                 return;
             }
 
-            try {
-                await savePwDataToGitHub(formData);
+            // 保存数据
+            const success = await savePwData(formData);
+            if (success) {
                 alert('添加成功！即将返回列表页');
                 window.location.href = 'pw.html';
-            } catch (error) {
-                console.error('提交失败：', error);
+            } else {
                 alert('添加失败，请重试！');
             }
         });
