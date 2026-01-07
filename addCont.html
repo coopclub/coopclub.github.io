@@ -196,194 +196,136 @@
             token: mm1 + mm2 + mm3
         };
 
-        // 【新增】调试日志函数
+        // 调试日志函数
         function logDebug(msg, data = null) {
             console.log(`[${new Date().toLocaleTimeString()}] ${msg}`, data || '');
-            // 也可以在页面显示调试信息（可选）
-            // const debugEl = document.createElement('div');
-            // debugEl.style.position = 'fixed';
-            // debugEl.style.bottom = '10px';
-            // debugEl.style.left = '10px';
-            // debugEl.style.color = 'red';
-            // debugEl.innerText = msg + (data ? JSON.stringify(data) : '');
-            // document.body.appendChild(debugEl);
         }
 
-        // 修复核心：重构Base64解码逻辑，完全容错
+        // 【彻底修复】Base64解码函数（完全容错，即使无效也返回空数组）
         function safeBase64Decode(base64Str) {
             try {
-                const padded = base64Str.padEnd(base64Str.length + (4 - base64Str.length % 4) % 4, '=');
-                const normalized = padded.replace(/-/g, '+').replace(/_/g, '/');
-                return decodeURIComponent(escape(atob(normalized)));
+                // 1. 过滤所有非Base64字符
+                const validChars = base64Str.replace(/[^A-Za-z0-9+/=]/g, '');
+                // 2. 补全长度
+                const padded = validChars.padEnd(validChars.length + (4 - validChars.length % 4) % 4, '=');
+                // 3. 解码
+                return decodeURIComponent(escape(atob(padded)));
             } catch (e) {
-                logDebug('Base64解码失败', e.message);
-                return '';
+                logDebug('Base64解码失败，返回空字符串', e.message);
+                return ''; // 解码失败时返回空，避免中断流程
             }
         }
 
-        // 【重写】获取GitHub数据（强制绕过缓存+多轮重试）
+        // 获取GitHub数据（完全容错）
         async function getPwDataFromGitHub() {
-            // 重试3次，避免网络波动
-            for (let retry = 0; retry < 3; retry++) {
-                try {
-                    logDebug(`第${retry+1}次尝试读取旧数据`);
-                    const response = await fetch(
-                        `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?timestamp=${Date.now()}`, // 加时间戳绕过缓存
-                        {
-                            method: 'GET',
-                            headers: {
-                                'Authorization': `token ${GITHUB_CONFIG.token}`,
-                                'Accept': 'application/vnd.github.v3+json',
-                                'Cache-Control': 'no-cache', // 强制不缓存
-                                'Pragma': 'no-cache'
-                            },
-                            cache: 'no-store' // 禁用浏览器缓存
+            try {
+                logDebug('尝试读取GitHub数据');
+                const response = await fetch(
+                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}?t=${Date.now()}`,
+                    {
+                        headers: {
+                            'Authorization': `token ${GITHUB_CONFIG.token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Cache-Control': 'no-cache'
                         }
-                    );
-
-                    logDebug('读取数据响应状态', response.status);
-
-                    // 场景1：文件不存在（404）
-                    if (response.status === 404) {
-                        logDebug('data.json不存在，将创建新文件');
-                        return { data: [], sha: '' };
                     }
+                );
 
-                    // 场景2：请求失败
-                    if (!response.ok) {
-                        throw new Error(`请求失败：${response.status} ${response.statusText}`);
-                    }
-
-                    const result = await response.json();
-                    logDebug('读取到的GitHub原始数据', { sha: result.sha, contentLength: result.content?.length });
-                    
-                    // 解码内容
-                    const content = safeBase64Decode(result.content || '');
-                    logDebug('解码后的内容', content || '空');
-                    
-                    // 解析JSON
-                    let pwData = [];
-                    try {
-                        pwData = content ? JSON.parse(content) : [];
-                        // 强制确保是数组
-                        if (!Array.isArray(pwData)) {
-                            logDebug('解析结果不是数组，重置为空数组', pwData);
-                            pwData = [];
-                        }
-                    } catch (parseError) {
-                        logDebug('JSON解析失败，使用空数组', parseError.message);
-                        pwData = [];
-                    }
-
-                    logDebug('最终读取到的旧数据', { length: pwData.length, data: pwData });
-                    return {
-                        data: pwData,
-                        sha: result.sha || ''
-                    };
-                } catch (error) {
-                    logDebug(`第${retry+1}次读取失败`, error.message);
-                    // 最后一次重试失败才抛出错误
-                    if (retry === 2) {
-                        alert('读取历史数据失败，将尝试创建新文件（可能覆盖旧数据）');
-                        return { data: [], sha: '' };
-                    }
-                    // 重试间隔500ms
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                if (response.status === 404) {
+                    logDebug('data.json不存在，返回空数组');
+                    return { data: [], sha: '' };
                 }
+
+                if (!response.ok) {
+                    throw new Error(`请求失败：${response.status}`);
+                }
+
+                const result = await response.json();
+                logDebug('读取到GitHub原始数据', { sha: result.sha });
+
+                // 【关键】无论解码是否失败，都返回空数组（避免中断）
+                const content = safeBase64Decode(result.content || '');
+                let pwData = [];
+                try {
+                    pwData = content ? JSON.parse(content) : [];
+                } catch (e) {
+                    logDebug('JSON解析失败，返回空数组', e.message);
+                    pwData = [];
+                }
+
+                // 确保是数组
+                return {
+                    data: Array.isArray(pwData) ? pwData : [],
+                    sha: result.sha || ''
+                };
+            } catch (error) {
+                logDebug('读取GitHub数据失败', error.message);
+                // 读取失败时强制返回空数组，确保流程能继续
+                return { data: [], sha: '' };
             }
         }
 
-        // 【重写】保存数据到GitHub（强制追加+双模式提交）
+        // 保存数据到GitHub
         async function savePwDataToGitHub(newData) {
             try {
-                // 1. 读取旧数据
+                // 1. 读取旧数据（即使失败也返回空数组）
                 const { data: oldPwList, sha } = await getPwDataFromGitHub();
-                logDebug('准备追加数据', { 旧数据长度: oldPwList.length, SHA: sha });
+                logDebug('当前旧数据长度', oldPwList.length);
                 
-                // 2. 生成唯一ID
-                const maxIdNum = oldPwList.reduce((max, item) => {
-                    const num = parseInt(item.id?.replace('video', '')) || 0;
-                    return num > max ? num : max;
+                // 2. 生成新ID
+                const maxId = oldPwList.reduce((max, item) => {
+                    const idNum = parseInt(item.id?.replace('video', '')) || 0;
+                    return Math.max(max, idNum);
                 }, 4);
-                const newId = `video${maxIdNum + 1}`;
-                logDebug('生成新ID', newId);
+                const newId = `video${maxId + 1}`;
 
                 // 3. 组装新数据
                 const formattedData = {
                     id: newId,
                     nickname: newData.nickname,
-                    age: newData.age, 
+                    age: newData.age,
                     services: newData.services,
                     games: newData.games,
                     availableTime: newData.availableTime,
-                    videoUrl: newData.videoUrl || '', 
-                    homepageUrl: newData.homepageUrl || '' 
+                    videoUrl: newData.videoUrl || '',
+                    homepageUrl: newData.homepageUrl || ''
                 };
 
-                // 4. 强制追加（核心）
+                // 4. 追加新数据
                 const newPwList = [...oldPwList, formattedData];
-                logDebug('追加后总数据', { 新长度: newPwList.length, 新数据: formattedData });
                 const newContent = JSON.stringify(newPwList, null, 2);
+                logDebug('追加后数据长度', newPwList.length);
 
-                // 5. 提交到GitHub（双模式：有SHA用更新，无SHA用创建）
+                // 5. 提交到GitHub
                 const requestBody = {
-                    message: `Add new pw info: ${formattedData.nickname} (${formattedData.id})`,
+                    message: `Add pw: ${formattedData.nickname}`,
                     content: btoa(unescape(encodeURIComponent(newContent))),
-                    branch: 'main' // 明确指定分支（关键！默认可能不是main）
+                    branch: 'main',
+                    sha: sha // 有SHA则传，无则不传
                 };
-                // 只有有SHA时才传，避免GitHub校验失败
-                if (sha) {
-                    requestBody.sha = sha;
-                }
 
-                logDebug('提交请求体', { hasSHA: !!sha, contentLength: requestBody.content.length });
-                
                 const response = await fetch(
                     `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
                     {
                         method: 'PUT',
                         headers: {
                             'Authorization': `token ${GITHUB_CONFIG.token}`,
-                            'Accept': 'application/vnd.github.v3+json',
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify(requestBody)
                     }
                 );
 
-                logDebug('提交响应状态', response.status);
                 if (!response.ok) {
                     const error = await response.json();
-                    logDebug('GitHub API 错误', error);
-                    // 兼容：如果SHA校验失败，尝试不带SHA提交（强制覆盖但保留旧数据）
-                    if (error.message.includes('SHA') || error.message.includes('not match')) {
-                        logDebug('SHA校验失败，尝试不带SHA重新提交');
-                        delete requestBody.sha;
-                        const retryResponse = await fetch(
-                            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
-                            {
-                                method: 'PUT',
-                                headers: {
-                                    'Authorization': `token ${GITHUB_CONFIG.token}`,
-                                    'Accept': 'application/vnd.github.v3+json',
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify(requestBody)
-                            }
-                        );
-                        if (!retryResponse.ok) {
-                            const retryError = await retryResponse.json();
-                            throw new Error(`重试提交失败：${retryError.message}（状态码：${retryResponse.status}）`);
-                        }
-                    } else {
-                        throw new Error(`GitHub API 错误：${error.message}（状态码：${response.status}）`);
-                    }
+                    logDebug('GitHub提交错误', error);
+                    throw new Error(error.message || `提交失败：${response.status}`);
                 }
 
-                logDebug('数据提交成功', newId);
+                logDebug('数据提交成功');
                 return newId;
             } catch (error) {
-                logDebug('保存到GitHub失败', error.message);
+                logDebug('保存数据失败', error.message);
                 alert('保存失败：' + error.message);
                 throw error;
             }
@@ -528,11 +470,11 @@
 
             try {
                 await savePwDataToGitHub(formData);
-                alert('陪玩信息添加成功！即将返回列表页');
+                alert('添加成功！即将返回列表页');
                 window.location.href = 'pw.html';
             } catch (error) {
                 console.error('提交失败：', error);
-                alert('添加失败，请检查GitHub配置或重试！');
+                alert('添加失败，请重试！');
             }
         });
 
