@@ -60,6 +60,14 @@
         main {
             flex: 1; /* 让main占满剩余空间，把footer推到底部 */
         }
+        /* 新增：logo样式 */
+        .logo-img {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
@@ -68,8 +76,11 @@
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
             
             <div class="flex items-center space-x-4">
-                <h1 class="text-xl font-bold text-primary">
-                    <i class="fa fa-gamepad mr-2"></i>陪玩信息列表
+                <!-- 修改处：添加logo图片 -->
+                <h1 class="text-xl font-bold text-primary flex items-center">
+                    <img src="http://photogzmaz.photo.store.qq.com/psc?/V54Msnar3hY7AG1Y8q1j0aWu2634RRZV/TmEUgtj9EK6.7V8ajmQrEE*WMbbCfXbAdGuzLepOCuOFv7R9KyAqL7nFuonQjOGXvX4s*GBT1k*WMgyOqGlI61tXXnnAZLg23jRjM1g2*yk!/mnull&bo=QAZABkAGQAYDByI!&rf=photolist&t=5" 
+                         alt="logo" 
+                         class="logo-img">陪玩信息列表
                 </h1>
                 <a href="index.html" class="text-sm bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 transition-colors">
                     <i class="fa fa-arrow-left mr-1"></i>返回列表
@@ -87,6 +98,7 @@
     <!-- 主内容区 -->
     <main class="container mx-auto px-4 py-8">
         <!-- 筛选栏 -->
+         <div style="text-align: center;margin-top: -20px; font-weight: 600;">QQ咨询群: 419972410，点单进群找值班接待!!!</div>
         <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
             <div class="flex flex-wrap gap-3 items-center">
                 <div class="flex items-center">
