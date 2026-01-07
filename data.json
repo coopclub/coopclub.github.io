@@ -1,15 +1,13 @@
 [
   {
     "id": "video5",
-    "nickname": "测试",
-    "age": "28",
+    "nickname": "测试1",
+    "age": "34",
     "services": [
-      "哄睡",
-      "端游"
+      "定制录音"
     ],
     "games": [
-      "英雄联盟",
-      "王者"
+      "英雄联盟"
     ],
     "availableTime": "全天在线",
     "videoUrl": "",
