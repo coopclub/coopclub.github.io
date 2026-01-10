@@ -30,12 +30,6 @@
             .form-label {
                 @apply block text-sm font-medium text-gray-700 mb-1;
             }
-            .tag-item {
-                @apply inline-flex items-center px-2 py-1 rounded text-xs mr-2 mb-2 cursor-pointer transition-colors;
-            }
-            .tag-delete {
-                @apply ml-1 text-xs opacity-70 hover:opacity-100;
-            }
         }
         .logo-img {
             width: 35px;
@@ -87,81 +81,23 @@
                 <!-- 接单信息 -->
                 <div class="space-y-4">
                     <h3 class="text-lg font-semibold border-b pb-2">接单信息</h3>
+                    <!-- 接单类型：纯文本输入 -->
                     <div>
-                        <label class="form-label">接单类型（可多选，最多10个） <span class="text-red-500">*</span></label>
-                        <div class="flex items-center mt-2 mb-2">
-                            <input type="text" id="newServiceTag" class="form-input mr-2 w-auto flex-1" placeholder="输入自定义接单类型">
-                            <button type="button" id="addServiceTagBtn" class="px-3 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-sm">
-                                <i class="fa fa-plus mr-1"></i>添加
-                            </button>
-                        </div>
-                        <div class="flex flex-wrap mt-2" id="serviceTags">
-                            <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="语聊">
-                                语聊 <i class="fa fa-times tag-delete"></i>
-                            </span>
-                            <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="哄睡">
-                                哄睡 <i class="fa fa-times tag-delete"></i>
-                            </span>
-                            <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="asmr">
-                                asmr <i class="fa fa-times tag-delete"></i>
-                            </span>
-                            <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="手游">
-                                手游 <i class="fa fa-times tag-delete"></i>
-                            </span>
-                            <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="端游">
-                                端游 <i class="fa fa-times tag-delete"></i>
-                            </span>
-                            <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="ts语音">
-                                ts语音 <i class="fa fa-times tag-delete"></i>
-                            </span>
-                            <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="定制录音">
-                                定制录音 <i class="fa fa-times tag-delete"></i>
-                            </span>
-                            <input type="hidden" id="services" name="services" required>
-                        </div>
+                        <label for="services" class="form-label">接单类型 <span class="text-red-500">*</span></label>
+                        <input type="text" id="services" name="services" required
+                            class="form-input" placeholder="例如：语聊、哄睡、手游、端游（多个类型用逗号分隔）">
                     </div>
+                    <!-- 擅长游戏：改为纯文本输入 -->
                     <div>
-                        <label class="form-label">擅长游戏（可多选，最多10个） <span class="text-red-500">*</span></label>
-                        <div class="flex items-center mt-2 mb-2">
-                            <input type="text" id="newGameTag" class="form-input mr-2 w-auto flex-1" placeholder="输入自定义游戏名称">
-                            <button type="button" id="addGameTagBtn" class="px-3 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors text-sm">
-                                <i class="fa fa-plus mr-1"></i>添加
-                            </button>
-                        </div>
-                        <div class="flex flex-wrap mt-2" id="gameTags">
-                            <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="王者">
-                                王者 <i class="fa fa-times tag-delete"></i>
-                            </span>
-                            <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="瓦罗兰特">
-                                瓦罗兰特 <i class="fa fa-times tag-delete"></i>
-                            </span>
-                            <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="steam游戏">
-                                steam游戏 <i class="fa fa-times tag-delete"></i>
-                            </span>
-                            <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="单机游戏">
-                                单机游戏 <i class="fa fa-times tag-delete"></i>
-                            </span>
-                            <span class="tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary" data-value="英雄联盟">
-                                英雄联盟 <i class="fa fa-times tag-delete"></i>
-                            </span>
-                            <input type="hidden" id="games" name="games" required>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="availableTime" class="form-label">接单时间 <span class="text-red-500">*</span></label>
-                        <input type="text" id="availableTime" name="availableTime" required
-                            class="form-input" placeholder="例如：12:00-03:00 或 全天在线">
+                        <label for="games" class="form-label">擅长游戏 <span class="text-red-500">*</span></label>
+                        <input type="text" id="games" name="games" required
+                            class="form-input" placeholder="例如：王者、瓦罗兰特、英雄联盟（多个游戏用逗号分隔）">
                     </div>
                 </div>
 
-                <!-- 媒体信息（非必填） -->
+                <!-- 其他信息 -->
                 <div class="space-y-4">
-                    <h3 class="text-lg font-semibold border-b pb-2">媒体信息（选填）</h3>
-                    <div>
-                        <label for="videoUrl" class="form-label">试音视频URL</label>
-                        <input type="url" id="videoUrl" name="videoUrl"
-                            class="form-input" placeholder="https://example.com/video.mp4">
-                    </div>
+                    <h3 class="text-lg font-semibold border-b pb-2">其他信息（选填）</h3>
                     <div>
                         <label for="homepageUrl" class="form-label">主页链接</label>
                         <input type="url" id="homepageUrl" name="homepageUrl"
@@ -193,10 +129,10 @@
 
     <script>
         const addPwForm = document.getElementById('addPwForm');
-        const MAX_TAGS = 10;
         const mm1 = 'ghp';
         const mm2 = '_qhEnzfDPTs1I6C90X';
         const mm3 = 'l9m8eF4GD3Jxz4S0QAp'
+        
         // 配置：替换为你的 GitHub 信息
         const GITHUB_CONFIG = {
             owner: 'coopclub',
@@ -204,27 +140,6 @@
             issueNumber: 1, // 新建一个 Issue，把编号填这里
             token: mm1 + mm2 + mm3
         };
-
-        // 工具函数：获取所有陪玩数据（从 Issue 评论中读取）
-        async function getPwData() {
-            try {
-                const res = await fetch(
-                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues/${GITHUB_CONFIG.issueNumber}/comments`,
-                    {
-                        headers: {
-                            'Authorization': `token ${GITHUB_CONFIG.token}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        }
-                    }
-                );
-                const comments = await res.json();
-                // 每个评论存一条数据
-                return comments.map(comment => JSON.parse(comment.body));
-            } catch (e) {
-                console.error('获取数据失败', e);
-                return [];
-            }
-        }
 
         // 工具函数：保存新数据（作为 Issue 评论提交）
         async function savePwData(newData) {
@@ -249,123 +164,21 @@
             }
         }
 
-        // 标签相关工具函数（不变）
-        function resetTagSelection() {
-            const serviceTags = document.querySelectorAll('#serviceTags .tag-item');
-            serviceTags.forEach(tag => {
-                tag.classList.remove('bg-primary/10', 'text-primary');
-                tag.classList.add('bg-gray-100', 'text-gray-800');
-            });
-            document.getElementById('services').value = '';
-            
-            const gameTags = document.querySelectorAll('#gameTags .tag-item');
-            gameTags.forEach(tag => {
-                tag.classList.remove('bg-primary/10', 'text-primary');
-                tag.classList.add('bg-gray-100', 'text-gray-800');
-            });
-            document.getElementById('games').value = '';
-        }
-
-        function createTagElement(value) {
-            const tag = document.createElement('span');
-            tag.className = 'tag-item bg-gray-100 text-gray-800 hover:bg-primary/10 hover:text-primary';
-            tag.setAttribute('data-value', value);
-            tag.innerHTML = `${value} <i class="fa fa-times tag-delete"></i>`;
-            return tag;
-        }
-
-        function addCustomTag(inputId, containerId) {
-            const input = document.getElementById(inputId);
-            const container = document.getElementById(containerId);
-            const tagValue = input.value.trim();
-            
-            if (!tagValue) {
-                alert('请输入标签内容');
-                return;
-            }
-            
-            const tagCount = container.querySelectorAll('.tag-item').length;
-            if (tagCount >= MAX_TAGS) {
-                alert(`最多只能添加${MAX_TAGS}个标签`);
-                return;
-            }
-            
-            const existingTags = container.querySelectorAll(`.tag-item[data-value="${tagValue}"]`);
-            if (existingTags.length > 0) {
-                alert('该标签已存在');
-                return;
-            }
-            
-            const newTag = createTagElement(tagValue);
-            container.insertBefore(newTag, container.lastElementChild);
-            bindTagEvents(newTag);
-            input.value = '';
-        }
-
-        function bindTagEvents(tagElement) {
-            tagElement.addEventListener('click', function(e) {
-                if (e.target.classList.contains('tag-delete')) return;
-                
-                const value = this.getAttribute('data-value');
-                const container = this.parentElement;
-                const hiddenInputId = container.id === 'serviceTags' ? 'services' : 'games';
-                const hiddenInput = document.getElementById(hiddenInputId);
-                
-                let selectedTags = new Set(hiddenInput.value ? hiddenInput.value.split(',') : []);
-                
-                if (selectedTags.has(value)) {
-                    selectedTags.delete(value);
-                    this.classList.remove('bg-primary/10', 'text-primary');
-                    this.classList.add('bg-gray-100', 'text-gray-800');
-                } else {
-                    selectedTags.add(value);
-                    this.classList.remove('bg-gray-100', 'text-gray-800');
-                    this.classList.add('bg-primary/10', 'text-primary');
-                }
-                
-                hiddenInput.value = Array.from(selectedTags).join(',');
-            });
-            
-            const deleteBtn = tagElement.querySelector('.tag-delete');
-            deleteBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const tag = this.parentElement;
-                const value = tag.getAttribute('data-value');
-                const container = tag.parentElement;
-                const hiddenInputId = container.id === 'serviceTags' ? 'services' : 'games';
-                const hiddenInput = document.getElementById(hiddenInputId);
-                
-                let selectedTags = new Set(hiddenInput.value ? hiddenInput.value.split(',') : []);
-                selectedTags.delete(value);
-                hiddenInput.value = Array.from(selectedTags).join(',');
-                tag.remove();
-            });
-        }
-
-        function setupTagSelection(tagContainerId) {
-            const container = document.getElementById(tagContainerId);
-            const tags = container.querySelectorAll('.tag-item');
-            tags.forEach(tag => {
-                bindTagEvents(tag);
-            });
-        }
-
         // 表单提交
         addPwForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // 整理表单数据
             const formData = {
                 id: `video${Date.now()}`, // 用时间戳做唯一ID
                 nickname: document.getElementById('nickname').value.trim(),
                 age: document.getElementById('age').value.trim(),
-                services: document.getElementById('services').value.split(',').filter(Boolean),
-                games: document.getElementById('games').value.split(',').filter(Boolean),
-                availableTime: document.getElementById('availableTime').value.trim(),
-                videoUrl: document.getElementById('videoUrl').value.trim(),
+                services: document.getElementById('services').value.trim(),
+                games: document.getElementById('games').value.trim(),
                 homepageUrl: document.getElementById('homepageUrl').value.trim()
             };
 
-            // 验证
+            // 表单验证
             if (!formData.nickname) {
                 alert('请输入昵称/类型！');
                 return;
@@ -374,20 +187,16 @@
                 alert('请输入18-60之间的有效年龄！');
                 return;
             }
-            if (!formData.availableTime) {
-                alert('请输入接单时间！');
+            if (!formData.services) {
+                alert('请输入接单类型！');
                 return;
             }
-            if (!formData.services.length) {
-                alert('请至少选择一项接单类型！');
-                return;
-            }
-            if (!formData.games.length) {
-                alert('请至少选择一项擅长游戏！');
+            if (!formData.games) {
+                alert('请输入擅长游戏！');
                 return;
             }
 
-            // 保存数据
+            // 保存数据到GitHub
             const success = await savePwData(formData);
             if (success) {
                 alert('添加成功！即将返回列表页');
@@ -396,31 +205,6 @@
                 alert('添加失败，请重试！');
             }
         });
-
-        // 初始化
-        setupTagSelection('serviceTags');
-        setupTagSelection('gameTags');
-
-        document.getElementById('addServiceTagBtn').addEventListener('click', () => {
-            addCustomTag('newServiceTag', 'serviceTags');
-        });
-        document.getElementById('addGameTagBtn').addEventListener('click', () => {
-            addCustomTag('newGameTag', 'gameTags');
-        });
-        
-        document.getElementById('newServiceTag').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addCustomTag('newServiceTag', 'serviceTags');
-        });
-        document.getElementById('newGameTag').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addCustomTag('newGameTag', 'gameTags');
-        });
-
-        addPwForm.addEventListener('reset', function() {
-            setTimeout(resetTagSelection, 0);
-        });
-
-        document.addEventListener('DOMContentLoaded', resetTagSelection);
     </script>
 </body>
 </html>
-
