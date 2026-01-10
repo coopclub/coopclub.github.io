@@ -14,7 +14,7 @@
                         primary: '#4F46E5',
                         secondary: '#F3F4F6',
                         neutral: '#6B7280',
-                        danger: '#EF4444', // 新增删除按钮颜色
+                        danger: '#EF4444',
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -47,7 +47,6 @@
                 @apply py-12 text-center text-neutral;
             }
         }
-        /* 新增：粘性底部核心样式 */
         html, body {
             min-height: 100vh;
             margin: 0;
@@ -58,9 +57,8 @@
             flex-direction: column;
         }
         main {
-            flex: 1; /* 让main占满剩余空间，把footer推到底部 */
+            flex: 1;
         }
-        /* 新增：logo样式 */
         .logo-img {
             width: 35px;
             height: 35px;
@@ -71,12 +69,9 @@
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
-    <!-- 页面头部 -->
     <header class="bg-white shadow-sm sticky top-0 z-10">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            
             <div class="flex items-center space-x-4">
-                <!-- 修改处：添加logo图片 -->
                 <h1 class="text-xl font-bold text-primary flex items-center">
                     <img src="dc8e19c02c5ea9a95711892e37523b9e.png" alt="logo" class="logo-img">陪玩信息列表
                 </h1>
@@ -93,10 +88,8 @@
         </div>
     </header>
 
-    <!-- 主内容区 -->
     <main class="container mx-auto px-4 py-8">
-        <!-- 筛选栏 -->
-         <div style="text-align: center;margin-top: -20px; font-weight: 600;">QQ咨询群: 419972410，点单进群找值班接待!!!</div>
+        <div style="text-align: center;margin-top: -20px; font-weight: 600;">QQ咨询群: 419972410，点单进群找值班接待!!!</div>
         <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
             <div class="flex flex-wrap gap-3 items-center">
                 <div class="flex items-center">
@@ -107,37 +100,26 @@
                         <option value="pc">端游</option>
                     </select>
                 </div>
-                <div class="flex items-center">
-                    <label class="text-sm text-neutral mr-2">接单时间：</label>
-                    <select class="px-3 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary" id="timeFilter">
-                        <option value="all">全部</option>
-                        <option value="day">白天</option>
-                        <option value="night">夜间</option>
-                        <option value="24h">24小时</option>
-                    </select>
-                </div>
+                <!-- 移除接单时间筛选器 -->
                 <div class="flex-grow flex justify-end">
                     <input type="text" placeholder="搜索陪玩昵称/输入管理口令..." class="px-3 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary w-64" id="searchInput">
                 </div>
             </div>
         </div>
 
-        <!-- 陪玩列表 -->
         <div class="bg-white rounded-lg shadow-sm overflow-hidden" id="pwListContainer">
+            <!-- 调整表头布局：移除接单时间、试音视频列，加宽接单类型列 -->
             <div class="grid grid-cols-12 bg-secondary py-3 px-4 text-sm font-medium text-neutral">
                 <div class="col-span-2">昵称/年龄</div>
-                <div class="col-span-2">接单类型</div>
-                <div class="col-span-2">接单时间</div>
-                <div class="col-span-3">试音视频</div>
-                <div class="col-span-1">主页链接</div>
-                <div class="col-span-1">操作</div> <!-- 新增：删除按钮列 -->
+                <div class="col-span-6">接单类型</div> <!-- 宽度从2调整为6 -->
+                <div class="col-span-2">主页链接</div> <!-- 宽度从1调整为2 -->
+                <div class="col-span-2">操作</div> <!-- 宽度从1调整为2 -->
             </div>
             <div id="pwListContent"></div>
             <div class="flex justify-center mt-8 pb-4" id="paginationContainer"></div>
         </div>
     </main>
 
-    <!-- 页面底部（固定在最底部） -->
     <footer class="bg-white mt-0 py-6 border-t border-gray-200">
         <div class="container mx-auto px-4 text-center text-sm text-neutral">
             <p>© 2026 笼club 陪玩信息展示平台 | 简洁列表版</p>
@@ -145,72 +127,55 @@
     </footer>
 
     <script>
-        // ========== 新增：防调试/防右键核心代码 ==========
-        // 1. 禁用鼠标右键菜单
         document.addEventListener('contextmenu', function(e) {
-            e.preventDefault(); // 阻止右键菜单弹出
+            e.preventDefault();
         });
 
-        // 2. 禁用F12、Ctrl+Shift+I、Ctrl+U、Ctrl+S等调试/查看源码快捷键
         document.addEventListener('keydown', function(e) {
-            // 禁用F12
             if (e.key === 'F12') {
                 e.preventDefault();
             }
-            // 禁用Ctrl+Shift+I（开发者工具）
             if (e.ctrlKey && e.shiftKey && e.key === 'I') {
                 e.preventDefault();
             }
-            // 禁用Ctrl+U（查看页面源代码）
             if (e.ctrlKey && e.key === 'u') {
                 e.preventDefault();
             }
-            // 禁用Ctrl+S（保存页面）
             if (e.ctrlKey && e.key === 's') {
                 e.preventDefault();
             }
-            // 禁用Shift+右键（菜单）
             if (e.shiftKey && e.button === 2) {
                 e.preventDefault();
             }
         });
 
-        // 3. 检测开发者工具打开并屏蔽（增强防护）
         function detectDevTools() {
             const devtools = /./;
             devtools.toString = function() {
-                // 检测到开发者工具打开时，清空页面内容（可选）
-                // document.body.innerHTML = '<h1 class="text-center text-red-500 mt-10">禁止调试！</h1>';
                 return '';
             };
-            // console.log('%c', devtools); // 触发检测
         }
-        // 定时检测
         setInterval(detectDevTools, 10000);
 
-        // ========== 核心修改：改用 GitHub Issues 读取数据 + 新增删除功能 ==========
         const onlineCountElement = document.getElementById('onlineCount');
         const pwListContent = document.getElementById('pwListContent');
         const paginationContainer = document.getElementById('paginationContainer');
         const searchInput = document.getElementById('searchInput');
         const serviceTypeFilter = document.getElementById('serviceTypeFilter');
-        const timeFilter = document.getElementById('timeFilter');
         const addPwBtn = document.getElementById('addPwBtn');
         const mm1 = 'ghp';
         const mm2 = '_qhEnzfDPTs1I6C90X';
         const mm3 = 'l9m8eF4GD3Jxz4S0QAp'
-        // 配置修改：改用 Issues 相关配置
+        
         const CONFIG = {
-            // GitHub Issues 配置（和添加页面保持一致）
             github: {
                 owner: 'coopclub', 
                 repo: 'coopclub.github.io', 
-                issueNumber: 1, // 替换为你新建的Issue编号
+                issueNumber: 1,
                 token: mm1 + mm2 + mm3
             },
             encryptedPassword: 'ZnJyczUzNTk0ODU0', 
             isAuth: false,
-            // 新增：存储评论ID和陪玩ID的映射（用于删除）
             commentIdMap: {},
             pagination: {
                 currentPage: 1,
@@ -221,7 +186,6 @@
             }
         };
 
-        // 加密/解密算法（保持不变）
         function encrypt(str) {
             let offsetStr = '';
             for (let i = 0; i < str.length; i++) {
@@ -243,12 +207,10 @@
             }
         }
         
-        // 权限验证（保持不变，新增删除按钮显示逻辑）
         function checkAuth(inputVal) {
             if (!inputVal) {
                 CONFIG.isAuth = false;
                 addPwBtn.classList.add('hidden');
-                // 隐藏所有删除按钮
                 document.querySelectorAll('.delete-pw-btn').forEach(btn => {
                     btn.classList.add('hidden');
                 });
@@ -258,41 +220,14 @@
             const isMatch = encryptedInput === CONFIG.encryptedPassword || inputVal === CONFIG.encryptedPassword;
             CONFIG.isAuth = isMatch;
             addPwBtn.classList.toggle('hidden', !isMatch);
-            // 显示/隐藏所有删除按钮
             document.querySelectorAll('.delete-pw-btn').forEach(btn => {
                 btn.classList.toggle('hidden', !isMatch);
             });
         }
-        
-        // 视频播放/关闭（保持不变）
-        function playVideo(id) {
-            const modal = document.getElementById(id);
-            if (modal) {
-                modal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            }
-        }
 
-        function closeVideo(id) {
-            const modal = document.getElementById(id);
-            if (modal) {
-                modal.classList.add('hidden');
-                document.body.style.overflow = 'auto';
-                const video = modal.querySelector('video');
-                video && video.pause();
-            }
-        }
+        // 移除视频播放相关函数（playVideo/closeVideo）
 
-        // 点击弹窗外部关闭（保持不变）
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-backdrop')) {
-                closeVideo(e.target.id);
-            }
-        });
-
-        // 核心修改：从 GitHub Issues 读取数据（新增评论ID映射）
         async function getPwDataFromGitHub() {
-            // 显示加载状态
             pwListContent.innerHTML = `<div class="loading-state"><i class="fa fa-spinner fa-spin mb-2 text-2xl"></i><p>正在加载陪玩数据...</p></div>`;
             
             try {
@@ -307,29 +242,24 @@
                 );
 
                 if (!response.ok) {
-                    // 如果Issue不存在或无权限，返回空数组
                     if (response.status === 404 || response.status === 403) {
                         return [];
                     }
                     throw new Error(`请求失败：${response.status}`);
                 }
 
-                // 读取所有评论，每个评论是一条陪玩数据
                 const comments = await response.json();
-                // 清空评论ID映射
                 CONFIG.commentIdMap = {};
-                // 解析评论内容为JSON数据
                 const pwData = comments.map(comment => {
                     try {
                         const data = JSON.parse(comment.body);
-                        // 存储评论ID和陪玩ID的映射（用于删除）
                         CONFIG.commentIdMap[data.id] = comment.id;
                         return data;
                     } catch (e) {
                         console.error('解析评论数据失败', e);
                         return null;
                     }
-                }).filter(item => item !== null); // 过滤解析失败的数据
+                }).filter(item => item !== null);
 
                 return pwData;
             } catch (error) {
@@ -339,14 +269,11 @@
             }
         }
 
-        // 新增：删除陪玩数据（删除对应的Issue评论）
         async function deletePwData(pwId) {
-            // 二次确认
             if (!confirm('确定要删除这条陪玩信息吗？删除后无法恢复！')) {
                 return;
             }
 
-            // 获取对应的评论ID
             const commentId = CONFIG.commentIdMap[pwId];
             if (!commentId) {
                 alert('未找到对应的评论ID，删除失败！');
@@ -369,7 +296,6 @@
                     throw new Error(`删除失败：${response.status}`);
                 }
 
-                // 删除成功后刷新数据
                 alert('删除成功！');
                 await initData();
                 filterData();
@@ -379,53 +305,31 @@
             }
         }
 
-        // 初始化数据（逻辑不变，数据源已替换）
         async function initData() {
-            // 从GitHub Issues获取数据
             const githubData = await getPwDataFromGitHub();
-            // 赋值给分页数据
             CONFIG.pagination.data = githubData;
             CONFIG.pagination.totalItems = githubData.length;
             CONFIG.pagination.totalPages = Math.ceil(CONFIG.pagination.totalItems / CONFIG.pagination.pageSize);
-            // 更新在线数量
             onlineCountElement.textContent = CONFIG.pagination.totalItems;
         }
 
-        // 渲染列表（新增删除按钮）
+        // 重构渲染列表函数：移除接单时间、试音视频，加宽接单类型列
         function renderList(data) {
             if (data.length === 0) {
                 pwListContent.innerHTML = `<div class="loading-state"><i class="fa fa-search mb-2 text-2xl"></i><p>暂无匹配的陪玩信息</p></div>`;
                 return;
             }
             pwListContent.innerHTML = data.map(item => {
-                // 处理标签数据
                 const services = Array.isArray(item.services) ? item.services : item.services.split(',').filter(Boolean);
                 const games = Array.isArray(item.games) ? item.games : item.games.split(',').filter(Boolean);
                 
-                const serviceTags = services.map(s => `<span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">${s}</span>`).join('');
-                const gameTags = games.map(g => `<span class="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded mt-1">${g}</span>`).join('');
-                
-                const videoHtml = item.videoUrl ? `
-                    <button class="text-primary text-sm flex items-center hover:text-primary/80" onclick="playVideo('${item.id}')">
-                        <i class="fa fa-play-circle mr-1"></i> 播放试音
-                    </button>
-                    <div id="${item.id}" class="modal-backdrop">
-                        <div class="bg-white rounded-lg w-full max-w-lg p-4 relative">
-                            <button onclick="closeVideo('${item.id}')" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800">
-                                <i class="fa fa-times text-xl"></i>
-                            </button>
-                            <video controls class="w-full h-auto">
-                                <source src="${item.videoUrl}" type="video/mp4">浏览器不支持播放
-                            </video>
-                        </div>
-                    </div>
-                ` : '<span class="text-neutral text-sm">暂无试音</span>';
+                const serviceTags = services.map(s => `<span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded mr-1 mb-1">${s}</span>`).join('');
+                const gameTags = games.map(g => `<span class="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded mr-1 mb-1">${g}</span>`).join('');
                 
                 const linkHtml = item.homepageUrl ? `<a href="${item.homepageUrl}" target="_blank" class="text-primary text-sm flex items-center hover:text-primary/80"><i class="fa fa-link mr-1"></i> 查看</a>` : '<span class="text-neutral text-sm">暂无链接</span>';
                 
-                // 新增：删除按钮（样式和添加按钮一致，默认隐藏）
                 const deleteBtnHtml = `
-                    <button class="delete-pw-btn text-sm bg-danger text-white px-2 py-1 rounded hover:bg-danger/90 transition-colors hidden" onclick="deletePwData('${item.id}')">
+                    <button class="delete-pw-btn text-sm bg-danger text-white px-3 py-1 rounded hover:bg-danger/90 transition-colors hidden" onclick="deletePwData('${item.id}')">
                         <i class="fa fa-trash mr-1"></i>删除
                     </button>
                 `;
@@ -436,15 +340,12 @@
                         <div class="font-medium">${item.nickname || '未填写'}</div>
                         <div class="text-xs text-neutral">${item.age || '未知'}岁</div>
                     </div>
-                    <div class="col-span-2">${serviceTags}${gameTags}</div>
-                    <div class="col-span-2 text-sm">${item.availableTime || '未填写'}</div>
-                    <div class="col-span-3">${videoHtml}</div>
-                    <div class="col-span-1">${linkHtml}</div>
-                    <div class="col-span-1">${deleteBtnHtml}</div> <!-- 新增：删除按钮列 -->
+                    <div class="col-span-6">${serviceTags}${gameTags}</div> <!-- 加宽到6列 -->
+                    <div class="col-span-2">${linkHtml}</div> <!-- 加宽到2列 -->
+                    <div class="col-span-2">${deleteBtnHtml}</div> <!-- 加宽到2列 -->
                 </div>`;
             }).join('');
 
-            // 权限验证后同步删除按钮显示状态
             if (CONFIG.isAuth) {
                 document.querySelectorAll('.delete-pw-btn').forEach(btn => {
                     btn.classList.remove('hidden');
@@ -452,7 +353,6 @@
             }
         }
 
-        // 渲染分页（保持不变）
         function renderPagination() {
             const { totalPages, currentPage } = CONFIG.pagination;
             if (totalPages <= 1) {
@@ -473,7 +373,6 @@
             paginationContainer.innerHTML = pageHtml;
         }
 
-        // 切换页码（保持不变）
         function changePage(pageNum) {
             const { totalPages } = CONFIG.pagination;
             if (pageNum < 1 || pageNum > totalPages) return;
@@ -481,39 +380,27 @@
             filterData();
         }
         
-        // 筛选数据（保持不变）
+        // 重构筛选函数：移除接单时间筛选逻辑
         function filterData() {
             const keyword = searchInput.value.toLowerCase().trim();
             const serviceType = serviceTypeFilter.value;
-            const timeType = timeFilter.value;
-            // 1. 先执行口令验证
+            
             checkAuth(keyword);
-            // 2. 再执行昵称搜索筛选
+            
             let filteredData = [...CONFIG.pagination.data];
             if (keyword && !CONFIG.isAuth) {
                 filteredData = filteredData.filter(item => {
                     return item.nickname && item.nickname.toLowerCase().includes(keyword);
                 });
             }
-            // 3. 接单类型筛选
+            
             if (serviceType !== 'all') {
                 filteredData = filteredData.filter(item => {
                     const servicesStr = (Array.isArray(item.services) ? item.services.join(',') : item.services || '').toLowerCase();
                     return serviceType === 'mobile' ? servicesStr.includes('手游') : servicesStr.includes('端游');
                 });
             }
-            // 4. 接单时间筛选
-            if (timeType !== 'all') {
-                filteredData = filteredData.filter(item => {
-                    const timeStr = (item.availableTime || '').toLowerCase();
-                    if (timeType === 'day') return timeStr.includes('白天') || (timeStr.includes('12') && !timeStr.includes('00:00'));
-                    if (timeType === 'night') return timeStr.includes('夜间') || timeStr.includes('00:00');
-                    if (timeType === '24h') return timeStr.includes('全天') || timeStr.includes('24小时');
-                    return true;
-                });
-            }
 
-            // 5. 分页处理
             const { currentPage, pageSize } = CONFIG.pagination;
             const start = (currentPage - 1) * pageSize;
             const end = start + pageSize;
@@ -524,15 +411,13 @@
             renderPagination();
         }
         
-        // 页面加载初始化（保持不变）
         document.addEventListener('DOMContentLoaded', async () => {
             await initData(); 
             filterData(); 
             searchInput.addEventListener('input', filterData);
             serviceTypeFilter.addEventListener('change', filterData);
-            timeFilter.addEventListener('change', filterData);
+            // 移除timeFilter的事件监听
         });
     </script>
 </body>
 </html>
-
