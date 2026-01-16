@@ -100,7 +100,6 @@
                         <option value="pc">端游</option>
                     </select>
                 </div>
-                <!-- 移除接单时间筛选器 -->
                 <div class="flex-grow flex justify-end">
                     <input type="text" placeholder="搜索陪玩昵称/输入管理口令..." class="px-3 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary w-64" id="searchInput">
                 </div>
@@ -108,12 +107,11 @@
         </div>
 
         <div class="bg-white rounded-lg shadow-sm overflow-hidden" id="pwListContainer">
-            <!-- 调整表头布局：移除接单时间、试音视频列，加宽接单类型列 -->
             <div class="grid grid-cols-12 bg-secondary py-3 px-4 text-sm font-medium text-neutral">
                 <div class="col-span-2">昵称/年龄</div>
-                <div class="col-span-6">接单类型</div> <!-- 宽度从2调整为6 -->
-                <div class="col-span-2">主页链接</div> <!-- 宽度从1调整为2 -->
-                <div class="col-span-2">操作</div> <!-- 宽度从1调整为2 -->
+                <div class="col-span-6">接单类型</div>
+                <div class="col-span-2">主页链接</div>
+                <div class="col-span-2">操作</div>
             </div>
             <div id="pwListContent"></div>
             <div class="flex justify-center mt-8 pb-4" id="paginationContainer"></div>
@@ -172,7 +170,8 @@
                 owner: 'coopclub', 
                 repo: 'coopclub.github.io', 
                 issueNumber: 1,
-                token: mm1 + mm2 + mm3
+                token: mm1 + mm2 + mm3,
+                perPage: 100 // 单次请求最大数量（GitHub API 最大支持100）
             },
             encryptedPassword: 'ZnJyczUzNTk0ODU0', 
             isAuth: false,
@@ -225,32 +224,51 @@
             });
         }
 
-        // 移除视频播放相关函数（playVideo/closeVideo）
-
-        async function getPwDataFromGitHub() {
+        // 核心修改：循环获取所有分页的GitHub评论数据
+        async function getAllPwDataFromGitHub() {
             pwListContent.innerHTML = `<div class="loading-state"><i class="fa fa-spinner fa-spin mb-2 text-2xl"></i><p>正在加载陪玩数据...</p></div>`;
             
+            let allComments = [];
+            let page = 1;
+            const perPage = CONFIG.github.perPage;
+            
             try {
-                const response = await fetch(
-                    `https://api.github.com/repos/${CONFIG.github.owner}/${CONFIG.github.repo}/issues/${CONFIG.github.issueNumber}/comments`,
-                    {
-                        headers: {
-                            'Authorization': `token ${CONFIG.github.token}`,
-                            'Accept': 'application/vnd.github.v3+json'
+                while (true) {
+                    // 每次请求添加page和per_page参数，获取分页数据
+                    const response = await fetch(
+                        `https://api.github.com/repos/${CONFIG.github.owner}/${CONFIG.github.repo}/issues/${CONFIG.github.issueNumber}/comments?page=${page}&per_page=${perPage}`,
+                        {
+                            headers: {
+                                'Authorization': `token ${CONFIG.github.token}`,
+                                'Accept': 'application/vnd.github.v3+json'
+                            }
                         }
-                    }
-                );
+                    );
 
-                if (!response.ok) {
-                    if (response.status === 404 || response.status === 403) {
-                        return [];
+                    if (!response.ok) {
+                        if (response.status === 404 || response.status === 403) {
+                            break;
+                        }
+                        throw new Error(`请求失败：${response.status}`);
                     }
-                    throw new Error(`请求失败：${response.status}`);
+
+                    const comments = await response.json();
+                    
+                    // 如果当前页没有数据，说明已经获取完所有数据
+                    if (comments.length === 0) {
+                        break;
+                    }
+                    
+                    allComments = allComments.concat(comments);
+                    page++;
+                    
+                    // 防止请求过快触发GitHub限流（可选）
+                    await new Promise(resolve => setTimeout(resolve, 100));
                 }
 
-                const comments = await response.json();
+                // 解析所有评论数据
                 CONFIG.commentIdMap = {};
-                const pwData = comments.map(comment => {
+                const pwData = allComments.map(comment => {
                     try {
                         const data = JSON.parse(comment.body);
                         CONFIG.commentIdMap[data.id] = comment.id;
@@ -305,15 +323,16 @@
             }
         }
 
+        // 修改初始化函数，调用新的全量数据获取函数
         async function initData() {
-            const githubData = await getPwDataFromGitHub();
+            // 替换为新的全量数据获取函数
+            const githubData = await getAllPwDataFromGitHub();
             CONFIG.pagination.data = githubData;
             CONFIG.pagination.totalItems = githubData.length;
             CONFIG.pagination.totalPages = Math.ceil(CONFIG.pagination.totalItems / CONFIG.pagination.pageSize);
             onlineCountElement.textContent = CONFIG.pagination.totalItems;
         }
 
-        // 重构渲染列表函数：移除接单时间、试音视频，加宽接单类型列
         function renderList(data) {
             if (data.length === 0) {
                 pwListContent.innerHTML = `<div class="loading-state"><i class="fa fa-search mb-2 text-2xl"></i><p>暂无匹配的陪玩信息</p></div>`;
@@ -340,9 +359,9 @@
                         <div class="font-medium">${item.nickname || '未填写'}</div>
                         <div class="text-xs text-neutral">${item.age || '未知'}岁</div>
                     </div>
-                    <div class="col-span-6">${serviceTags}${gameTags}</div> <!-- 加宽到6列 -->
-                    <div class="col-span-2">${linkHtml}</div> <!-- 加宽到2列 -->
-                    <div class="col-span-2">${deleteBtnHtml}</div> <!-- 加宽到2列 -->
+                    <div class="col-span-6">${serviceTags}${gameTags}</div>
+                    <div class="col-span-2">${linkHtml}</div>
+                    <div class="col-span-2">${deleteBtnHtml}</div>
                 </div>`;
             }).join('');
 
@@ -380,7 +399,6 @@
             filterData();
         }
         
-        // 重构筛选函数：移除接单时间筛选逻辑
         function filterData() {
             const keyword = searchInput.value.toLowerCase().trim();
             const serviceType = serviceTypeFilter.value;
@@ -416,7 +434,6 @@
             filterData(); 
             searchInput.addEventListener('input', filterData);
             serviceTypeFilter.addEventListener('change', filterData);
-            // 移除timeFilter的事件监听
         });
     </script>
 </body>
