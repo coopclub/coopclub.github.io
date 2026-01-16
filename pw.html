@@ -66,6 +66,11 @@
             object-fit: cover;
             margin-right: 8px;
         }
+        /* 优化大量数据的滚动体验 */
+        .data-container {
+            max-height: calc(100vh - 240px);
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
@@ -113,8 +118,8 @@
                 <div class="col-span-2">主页链接</div>
                 <div class="col-span-2">操作</div>
             </div>
-            <div id="pwListContent"></div>
-            <div class="flex justify-center mt-8 pb-4" id="paginationContainer"></div>
+            <!-- 添加滚动容器，优化大量数据显示 -->
+            <div id="pwListContent" class="data-container"></div>
         </div>
     </main>
 
@@ -157,7 +162,6 @@
 
         const onlineCountElement = document.getElementById('onlineCount');
         const pwListContent = document.getElementById('pwListContent');
-        const paginationContainer = document.getElementById('paginationContainer');
         const searchInput = document.getElementById('searchInput');
         const serviceTypeFilter = document.getElementById('serviceTypeFilter');
         const addPwBtn = document.getElementById('addPwBtn');
@@ -176,13 +180,7 @@
             encryptedPassword: 'ZnJyczUzNTk0ODU0', 
             isAuth: false,
             commentIdMap: {},
-            pagination: {
-                currentPage: 1,
-                pageSize: 10,
-                totalItems: 0,
-                totalPages: 0,
-                data: []
-            }
+            allData: [] // 存储所有数据，不再使用分页
         };
 
         function encrypt(str) {
@@ -224,7 +222,7 @@
             });
         }
 
-        // 核心修改：循环获取所有分页的GitHub评论数据
+        // 循环获取所有分页的GitHub评论数据
         async function getAllPwDataFromGitHub() {
             pwListContent.innerHTML = `<div class="loading-state"><i class="fa fa-spinner fa-spin mb-2 text-2xl"></i><p>正在加载陪玩数据...</p></div>`;
             
@@ -262,7 +260,7 @@
                     allComments = allComments.concat(comments);
                     page++;
                     
-                    // 防止请求过快触发GitHub限流（可选）
+                    // 防止请求过快触发GitHub限流
                     await new Promise(resolve => setTimeout(resolve, 100));
                 }
 
@@ -279,6 +277,7 @@
                     }
                 }).filter(item => item !== null);
 
+                CONFIG.allData = pwData;
                 return pwData;
             } catch (error) {
                 console.error('获取GitHub Issues数据失败：', error);
@@ -315,6 +314,7 @@
                 }
 
                 alert('删除成功！');
+                // 删除后重新加载所有数据
                 await initData();
                 filterData();
             } catch (error) {
@@ -323,22 +323,22 @@
             }
         }
 
-        // 修改初始化函数，调用新的全量数据获取函数
+        // 初始化数据
         async function initData() {
-            // 替换为新的全量数据获取函数
             const githubData = await getAllPwDataFromGitHub();
-            CONFIG.pagination.data = githubData;
-            CONFIG.pagination.totalItems = githubData.length;
-            CONFIG.pagination.totalPages = Math.ceil(CONFIG.pagination.totalItems / CONFIG.pagination.pageSize);
-            onlineCountElement.textContent = CONFIG.pagination.totalItems;
+            CONFIG.allData = githubData;
+            onlineCountElement.textContent = githubData.length;
         }
 
-        function renderList(data) {
+        // 渲染所有数据（不分页）
+        function renderAllData(data) {
             if (data.length === 0) {
                 pwListContent.innerHTML = `<div class="loading-state"><i class="fa fa-search mb-2 text-2xl"></i><p>暂无匹配的陪玩信息</p></div>`;
                 return;
             }
-            pwListContent.innerHTML = data.map(item => {
+            
+            // 生成所有数据的HTML
+            const html = data.map(item => {
                 const services = Array.isArray(item.services) ? item.services : item.services.split(',').filter(Boolean);
                 const games = Array.isArray(item.games) ? item.games : item.games.split(',').filter(Boolean);
                 
@@ -364,54 +364,36 @@
                     <div class="col-span-2">${deleteBtnHtml}</div>
                 </div>`;
             }).join('');
+            
+            pwListContent.innerHTML = html;
 
+            // 如果有权限，显示删除按钮
             if (CONFIG.isAuth) {
                 document.querySelectorAll('.delete-pw-btn').forEach(btn => {
                     btn.classList.remove('hidden');
                 });
             }
         }
-
-        function renderPagination() {
-            const { totalPages, currentPage } = CONFIG.pagination;
-            if (totalPages <= 1) {
-                paginationContainer.innerHTML = '';
-                return;
-            }
-            let pageHtml = `
-                <nav class="inline-flex rounded-md shadow-sm" aria-label="Pagination">
-                    <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium ${currentPage === 1 ? 'text-gray-400 bg-gray-100 cursor-not-allowed' : 'text-gray-500 bg-white hover:bg-gray-50'}" onclick="changePage(${currentPage - 1})"><i class="fa fa-chevron-left text-xs"></i></a>
-            `;
-            for (let i = 1; i <= totalPages; i++) {
-                pageHtml += `<a href="#" class="relative inline-flex items-center px-4 py-2 text-sm font-medium ${i === currentPage ? 'text-primary bg-primary/5' : 'text-gray-700 bg-white hover:bg-gray-50'}" onclick="changePage(${i})">${i}</a>`;
-            }
-            pageHtml += `
-                    <a href="#" class="relative inline-flex items-center px-3 py-2 text-sm font-medium ${currentPage === totalPages ? 'text-gray-400 bg-gray-100 cursor-not-allowed' : 'text-gray-500 bg-white hover:bg-gray-50'}" onclick="changePage(${currentPage + 1})"><i class="fa fa-chevron-right text-xs"></i></a>
-                </nav>
-            `;
-            paginationContainer.innerHTML = pageHtml;
-        }
-
-        function changePage(pageNum) {
-            const { totalPages } = CONFIG.pagination;
-            if (pageNum < 1 || pageNum > totalPages) return;
-            CONFIG.pagination.currentPage = pageNum;
-            filterData();
-        }
         
+        // 筛选数据（不再分页）
         function filterData() {
             const keyword = searchInput.value.toLowerCase().trim();
             const serviceType = serviceTypeFilter.value;
             
+            // 先验证权限
             checkAuth(keyword);
             
-            let filteredData = [...CONFIG.pagination.data];
+            // 复制原始数据进行筛选
+            let filteredData = [...CONFIG.allData];
+            
+            // 昵称搜索筛选（非管理员状态下）
             if (keyword && !CONFIG.isAuth) {
                 filteredData = filteredData.filter(item => {
                     return item.nickname && item.nickname.toLowerCase().includes(keyword);
                 });
             }
             
+            // 接单类型筛选
             if (serviceType !== 'all') {
                 filteredData = filteredData.filter(item => {
                     const servicesStr = (Array.isArray(item.services) ? item.services.join(',') : item.services || '').toLowerCase();
@@ -419,19 +401,17 @@
                 });
             }
 
-            const { currentPage, pageSize } = CONFIG.pagination;
-            const start = (currentPage - 1) * pageSize;
-            const end = start + pageSize;
-            const pageData = filteredData.slice(start, end);
-            CONFIG.pagination.totalItems = filteredData.length;
-            CONFIG.pagination.totalPages = Math.ceil(filteredData.length / pageSize);
-            renderList(pageData);
-            renderPagination();
+            // 渲染所有筛选后的数据
+            renderAllData(filteredData);
+            // 更新计数显示
+            onlineCountElement.textContent = filteredData.length;
         }
         
+        // 页面加载完成初始化
         document.addEventListener('DOMContentLoaded', async () => {
             await initData(); 
             filterData(); 
+            // 绑定筛选事件
             searchInput.addEventListener('input', filterData);
             serviceTypeFilter.addEventListener('change', filterData);
         });
